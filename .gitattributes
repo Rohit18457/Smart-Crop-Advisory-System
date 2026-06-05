@@ -1,0 +1,14 @@
+# Git LFS — Track large files
+# ==========================
+# Datasets and model weights should use Git LFS to avoid bloating the repository.
+
+# ML model files
+*.keras filter=lfs diff=lfs merge=lfs -text
+*.h5 filter=lfs diff=lfs merge=lfs -text
+*.pkl filter=lfs diff=lfs merge=lfs -text
+
+# Dataset archives
+datasets/*.zip filter=lfs diff=lfs merge=lfs -text
+
+# Large images from training
+training/*.png filter=lfs diff=lfs merge=lfs -text

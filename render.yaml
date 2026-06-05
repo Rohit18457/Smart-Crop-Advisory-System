@@ -1,0 +1,29 @@
+# render.yaml — Render Blueprint for Flask Backend
+# Deploy from the /backend directory
+# Set environment variables in Render dashboard
+
+services:
+  - type: web
+    name: smart-crop-backend
+    runtime: python
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: FLASK_ENV
+        value: production
+      - key: GROQ_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: WEATHER_API_KEY
+        sync: false
+      - key: MARKET_API_KEY
+        sync: false

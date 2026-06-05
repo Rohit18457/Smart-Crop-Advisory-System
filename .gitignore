@@ -1,0 +1,75 @@
+# ──────────────────────────────────────────────────
+# Smart Crop Advisory System — .gitignore
+# ──────────────────────────────────────────────────
+
+# ── Dependencies ──────────────────────────────────
+node_modules/
+frontend/node_modules/
+
+# ── Environment variables ─────────────────────────
+.env
+.env.local
+.env.*.local
+frontend/.env
+backend/.env
+
+# ── Python ────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+backend/.pytest_cache/
+
+# ── ML Models (large files) ──────────────────────
+models/
+backend/models/__pycache__/
+
+# ── Datasets (large files) ───────────────────────
+datasets/
+
+# ── Training scripts & notebooks ─────────────────
+training/
+
+# ── Uploads ──────────────────────────────────────
+backend/uploads/
+
+# ── Build outputs ────────────────────────────────
+frontend/build/
+
+# ── SQL migration/seed scripts (not needed in repo)
+*.sql
+
+# ── Root-level example/integration files ─────────
+backend_integration_examples.py
+frontend_integration_examples.js
+notification_examples.py
+realtime_notifications.js
+fixed_auth_context.js
+
+# ── Root-level troubleshooting docs ──────────────
+auth_troubleshooting_guide.md
+authentication_fix_guide.md
+project_presentation_guide.md
+
+# ── Docker (not needed for Vercel/Render deploy) ─
+Dockerfile.backend
+docker-compose.yml
+
+# ── IDE ──────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── OS ───────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── User data ────────────────────────────────────
+backend/data/users.json
+
+# ── Gemini agent files ───────────────────────────
+.gemini/

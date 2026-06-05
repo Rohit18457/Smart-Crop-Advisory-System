@@ -1,0 +1,10 @@
+# Smart Agriculture Advisory Platform
+# https://smartagri.example.com
+
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://smartagri.example.com/sitemap.xml
