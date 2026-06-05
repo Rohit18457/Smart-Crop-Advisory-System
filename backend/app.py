@@ -59,7 +59,7 @@ def create_app() -> Flask:
     app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 
     # ── CORS (allow frontend to call the API) ──────────────────────────────
-    CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000"]}})
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
     # ── Rate Limiter ───────────────────────────────────────────────────────
     limiter.init_app(app)
