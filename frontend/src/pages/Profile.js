@@ -58,6 +58,11 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
+    if (!form.full_name || !/^[A-Za-z\s]+$/.test(form.full_name.trim())) {
+      alert('Name can only contain letters and spaces.');
+      return;
+    }
+    
     setSaving(true);
     try {
       await updateProfile(form);

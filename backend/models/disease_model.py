@@ -6,7 +6,7 @@ that accepts a preprocessed numpy array and returns class name + confidence.
 """
 
 import numpy as np
-import tensorflow as tf
+import keras
 from config import DISEASE_MODEL_PATH, DISEASE_CLASS_NAMES, DISEASE_SOLUTIONS
 
 # ── Global handle ──────────────────────────────────────────────────────────────
@@ -18,7 +18,7 @@ def load_model():
     global _model
     if _model is None:
         print(f"  [..]  Loading disease model from {DISEASE_MODEL_PATH} ...")
-        _model = tf.keras.models.load_model(DISEASE_MODEL_PATH)
+        _model = keras.saving.load_model(DISEASE_MODEL_PATH)
         print("  [..]  Warming up model to prevent first-request timeout...")
         dummy_input = np.zeros((1, 224, 224, 3), dtype=np.float32)
         _model.predict(dummy_input, verbose=0)

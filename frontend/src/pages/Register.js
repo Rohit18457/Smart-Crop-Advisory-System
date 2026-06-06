@@ -37,9 +37,9 @@ const Register = () => {
     soilType: '', location: '', preferredLanguage: 'en', phone: '',
   });
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const phoneRegex = /^(\+91[\s-]?)?[6-9]\d{9}$/;
-  const nameRegex = /^[A-Za-z\s.'-]+$/;
+  const nameRegex = /^[A-Za-z\s]+$/;
 
   const passwordChecks = {
     length: form.password.length >= 6,
@@ -79,13 +79,14 @@ const Register = () => {
     const errors = {};
     if (!form.fullName.trim()) errors.fullName = 'Full name is required.';
     else if (form.fullName.trim().length < 2) errors.fullName = 'Name must be at least 2 characters.';
-    else if (!nameRegex.test(form.fullName.trim())) errors.fullName = 'Name can only contain letters, spaces, dots and hyphens.';
+    else if (!nameRegex.test(form.fullName.trim())) errors.fullName = 'Name can only contain letters and spaces.';
 
     if (!form.email.trim()) errors.email = 'Email is required.';
     else if (!emailRegex.test(form.email.trim())) errors.email = 'Please enter a valid email address.';
 
     if (!form.password) errors.password = 'Password is required.';
     else if (form.password.length < 6) errors.password = 'Password must be at least 6 characters.';
+    else if (/\s/.test(form.password)) errors.password = 'Password cannot contain spaces.';
 
     if (!form.confirmPassword) errors.confirmPassword = 'Please confirm your password.';
     else if (form.password !== form.confirmPassword) errors.confirmPassword = 'Passwords do not match.';
