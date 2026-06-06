@@ -20,7 +20,7 @@ def load_model():
         print(f"  [..]  Loading disease model from {DISEASE_MODEL_PATH} ...")
         _model = tf.keras.models.load_model(DISEASE_MODEL_PATH)
         print("  [..]  Warming up model to prevent first-request timeout...")
-        dummy_input = np.zeros((1, 160, 160, 3), dtype=np.float32)
+        dummy_input = np.zeros((1, 224, 224, 3), dtype=np.float32)
         _model.predict(dummy_input, verbose=0)
         print("  [OK]  Disease model loaded and warmed up successfully!")
     return _model
