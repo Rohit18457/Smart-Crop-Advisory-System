@@ -12,10 +12,20 @@ import {
   BookOpen,
   Lightbulb,
   Bot,
-  User
+  User,
+  Globe
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import Card from '../components/Common/Card';
 import { sendChatMessage } from '../api';
+
+const SUPPORTED_LANGUAGES = [
+  { code: 'en-IN', label: 'English (India)' },
+  { code: 'hi-IN', label: 'Hindi (हिन्दी)' },
+  { code: 'mr-IN', label: 'Marathi (मराठी)' },
+  { code: 'ta-IN', label: 'Tamil (தமிழ்)' }
+];
 
 const VoiceAssistant = () => {
   const { t } = useTranslation();
@@ -32,6 +42,7 @@ const VoiceAssistant = () => {
   ]);
   const [inputText, setInputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedLang, setSelectedLang] = useState(SUPPORTED_LANGUAGES[0]);
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -53,7 +64,7 @@ const VoiceAssistant = () => {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = 'en-IN';
+    recognition.lang = selectedLang.code;
     recognition.interimResults = true;
     recognition.continuous = false;
     recognition.maxAlternatives = 1;
@@ -172,7 +183,7 @@ const VoiceAssistant = () => {
       
       setIsSpeaking(true);
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-IN';
+      utterance.lang = selectedLang.code;
       utterance.rate = 0.9;
       utterance.pitch = 1;
       utterance.onend = () => setIsSpeaking(false);
@@ -215,14 +226,29 @@ const VoiceAssistant = () => {
         {/* Voice Controls */}
         <Card title="Voice Controls" icon={Mic} iconBg="bg-violet-100" iconColor="text-violet-600">
           <div className="space-y-5">
+            {/* Language Selector */}
+            <div className="flex items-center gap-3 bg-surface-50 border border-surface-200 rounded-xl p-3">
+              <Globe className="h-5 w-5 text-surface-500" />
+              <select 
+                value={selectedLang.code}
+                onChange={(e) => setSelectedLang(SUPPORTED_LANGUAGES.find(l => l.code === e.target.value))}
+                className="flex-1 bg-transparent border-none focus:outline-none text-sm font-semibold text-surface-700 cursor-pointer"
+              >
+                {SUPPORTED_LANGUAGES.map(lang => (
+                  <option key={lang.code} value={lang.code}>{lang.label}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Voice Button */}
             <div className="text-center py-4">
               <div className="relative inline-flex">
                 {isListening && (
-                  <>
-                    <div className="absolute inset-0 w-24 h-24 rounded-full bg-red-500 animate-ping opacity-20 m-auto" />
-                    <div className="absolute inset-0 w-28 h-28 rounded-full bg-red-500 animate-ping opacity-10 m-auto" style={{ animationDelay: '0.3s' }} />
-                  </>
+                  <div className="absolute inset-0 flex items-center justify-center gap-1.5 pointer-events-none z-10">
+                    {[1,2,3,4,5].map(i => (
+                      <div key={i} className="w-1.5 bg-white/80 rounded-full animate-wave" style={{ animationDelay: `${i * 0.15}s`, height: '24px' }} />
+                    ))}
+                  </div>
                 )}
                 <button
                   onClick={isListening ? stopListening : startListening}
@@ -311,14 +337,20 @@ const VoiceAssistant = () => {
                     )}
                     <div
                       className={`
-                        px-4 py-3 rounded-2xl text-sm leading-relaxed
+                        px-4 py-3 rounded-2xl text-sm leading-relaxed max-w-full overflow-hidden
                         ${message.type === 'user'
                           ? 'bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-tr-sm'
-                          : 'bg-surface-100 text-surface-800 rounded-tl-sm'
+                          : 'bg-surface-100 text-surface-800 rounded-tl-sm prose prose-sm prose-primary max-w-none dark:prose-invert'
                         }
                       `}
                     >
-                      <p style={{ whiteSpace: 'pre-wrap' }}>{message.content}</p>
+                      {message.type === 'user' ? (
+                        <p style={{ whiteSpace: 'pre-wrap' }}>{message.content}</p>
+                      ) : (
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {message.content}
+                        </ReactMarkdown>
+                      )}
                       <p className={`text-[10px] mt-2 ${message.type === 'user' ? 'text-primary-200' : 'text-surface-400'}`}>
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>

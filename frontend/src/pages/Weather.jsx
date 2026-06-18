@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { 
   CloudSun, 
@@ -19,17 +20,8 @@ import { getWeather, getWeatherForecast } from '../api';
 
 const Weather = () => {
   const { t } = useTranslation();
-  const [currentWeather, setCurrentWeather] = useState(null);
-  const [forecast, setForecast] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [city, setCity] = useState('Mumbai');
   const [searchInput, setSearchInput] = useState('Mumbai');
-
-  useEffect(() => {
-    fetchWeatherData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const getWeatherIcon = (main) => {
     const icons = {
@@ -40,82 +32,79 @@ const Weather = () => {
     return icons[main] || '⛅';
   };
 
-  const fetchWeatherData = async () => {
-    setLoading(true);
-    setError(null);
+  const { data: currentWeatherData, isLoading: loadingWeather, isError: isWeatherError, error: weatherError } = useQuery({
+    queryKey: ['weather', city],
+    queryFn: async () => {
+      const data = await getWeather(city);
+      if (!data.success) throw new Error(data.error || 'Failed to fetch weather');
+      return data;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
 
-    try {
-      // Fetch current weather
-      const weatherData = await getWeather(city);
-      if (weatherData.success) {
-        const w = weatherData.weather;
-        setCurrentWeather({
-          location: `${w.city}, ${w.country}`,
-          temperature: Math.round(w.temperature.current),
-          condition: w.weather.description.charAt(0).toUpperCase() + w.weather.description.slice(1),
-          humidity: w.humidity,
-          windSpeed: w.wind.speed,
-          pressure: w.pressure,
-          visibility: Math.round((w.visibility || 0) / 1000),
-          feelsLike: Math.round(w.temperature.feels_like),
-          icon: getWeatherIcon(w.weather.main),
-          clouds: w.clouds,
-        });
-      } else {
-        setError(weatherData.error || 'Failed to fetch weather');
-        setLoading(false);
-        return;
+  const { data: forecastData, isLoading: loadingForecast, isError: isForecastError, error: forecastError } = useQuery({
+    queryKey: ['forecast', city],
+    queryFn: async () => {
+      const data = await getWeatherForecast(city);
+      if (!data.success) throw new Error(data.error || 'Failed to fetch forecast');
+      return data;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const loading = loadingWeather || loadingForecast;
+  const isError = isWeatherError || isForecastError;
+  const error = isError ? (weatherError?.message || forecastError?.message) : null;
+
+  const currentWeather = useMemo(() => {
+    if (!currentWeatherData) return null;
+    const w = currentWeatherData.weather;
+    return {
+      location: `${w.city}, ${w.country}`,
+      temperature: Math.round(w.temperature.current),
+      condition: w.weather.description.charAt(0).toUpperCase() + w.weather.description.slice(1),
+      humidity: w.humidity,
+      windSpeed: w.wind.speed,
+      pressure: w.pressure,
+      visibility: Math.round((w.visibility || 0) / 1000),
+      feelsLike: Math.round(w.temperature.feels_like),
+      icon: getWeatherIcon(w.weather.main),
+      clouds: w.clouds,
+    };
+  }, [currentWeatherData]);
+
+  const forecast = useMemo(() => {
+    if (!forecastData) return [];
+    const dailyMap = {};
+    forecastData.forecast.forEach((item) => {
+      const date = item.datetime.split(' ')[0];
+      const hour = parseInt(item.datetime.split(' ')[1].split(':')[0]);
+      if (!dailyMap[date] || Math.abs(hour - 12) < Math.abs(parseInt(dailyMap[date].datetime.split(' ')[1].split(':')[0]) - 12)) {
+        dailyMap[date] = item;
       }
+    });
 
-      // Fetch forecast
-      const forecastData = await getWeatherForecast(city);
-      if (forecastData.success) {
-        // Group by day and pick one entry per day (around noon)
-        const dailyMap = {};
-        forecastData.forecast.forEach((item) => {
-          const date = item.datetime.split(' ')[0];
-          const hour = parseInt(item.datetime.split(' ')[1].split(':')[0]);
-          if (!dailyMap[date] || Math.abs(hour - 12) < Math.abs(parseInt(dailyMap[date].datetime.split(' ')[1].split(':')[0]) - 12)) {
-            dailyMap[date] = item;
-          }
-        });
-
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const dailyForecast = Object.entries(dailyMap).slice(0, 7).map(([date, item], index) => {
-          const d = new Date(date);
-          return {
-            day: index === 0 ? 'Today' : index === 1 ? 'Tomorrow' : days[d.getDay()],
-            high: Math.round(item.temperature.max),
-            low: Math.round(item.temperature.min),
-            condition: item.weather.description.charAt(0).toUpperCase() + item.weather.description.slice(1),
-            icon: getWeatherIcon(item.weather.main),
-            rain: Math.round((item.rain_3h || 0) * 10),
-            humidity: item.humidity,
-          };
-        });
-        setForecast(dailyForecast);
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to connect to server');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return Object.entries(dailyMap).slice(0, 7).map(([date, item], index) => {
+      const d = new Date(date);
+      return {
+        day: index === 0 ? 'Today' : index === 1 ? 'Tomorrow' : days[d.getDay()],
+        high: Math.round(item.temperature.max),
+        low: Math.round(item.temperature.min),
+        condition: item.weather.description.charAt(0).toUpperCase() + item.weather.description.slice(1),
+        icon: getWeatherIcon(item.weather.main),
+        rain: Math.round((item.rain_3h || 0) * 10),
+        humidity: item.humidity,
+      };
+    });
+  }, [forecastData]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchInput.trim()) {
       setCity(searchInput.trim());
-      setTimeout(() => fetchWeatherData(), 0);
     }
   };
-
-
-  // Re-fetch when city changes
-  useEffect(() => {
-    if (city) fetchWeatherData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [city]);
 
   const getWeatherAdvice = (condition, temperature) => {
     if (!condition) return null;

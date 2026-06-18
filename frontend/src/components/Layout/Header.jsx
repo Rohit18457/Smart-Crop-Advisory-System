@@ -13,7 +13,7 @@ const Header = ({ onMenuClick }) => {
     localStorage.setItem('theme', dark ? 'dark' : 'light');
   }, [dark]);
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b border-surface-200/60 sticky top-0 z-30">
+    <header className="bg-white/60 backdrop-blur-xl border-b border-white/80 shadow-sm sticky top-0 z-30 transition-all duration-300">
       <div className="flex items-center justify-between px-4 md:px-6 h-[72px]">
         {/* Left side */}
         <div className="flex items-center gap-3">

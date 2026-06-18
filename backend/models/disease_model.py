@@ -5,40 +5,38 @@ Loads the trained MobileNetV2 .keras model and exposes a predict() function
 that accepts a preprocessed numpy array and returns class name + confidence.
 """
 
+import os
+import logging
 import numpy as np
-import keras
 from config import DISEASE_MODEL_PATH, DISEASE_CLASS_NAMES, DISEASE_SOLUTIONS
+
+logger = logging.getLogger(__name__)
+
+# Force Keras 3 to use the PyTorch backend instead of TensorFlow (avoids Windows DLL crashes)
+os.environ["KERAS_BACKEND"] = "torch"
+# Disable PyTorch's dynamo compiler to prevent cl.exe missing compiler errors on Windows
+os.environ["TORCH_COMPILE_DISABLE"] = "1"
+
+import keras
 
 # ── Global handle ──────────────────────────────────────────────────────────────
 _model = None
-
+_keras_available = True
 
 def load_model():
     """Load the .keras model into memory (called once at app startup)."""
     global _model
+        
     if _model is None:
-        print(f"  [..]  Loading disease model from {DISEASE_MODEL_PATH} ...")
+        print(f"  [..]  Loading disease model from {DISEASE_MODEL_PATH} via PyTorch backend...")
         _model = keras.saving.load_model(DISEASE_MODEL_PATH)
         print("  [..]  Warming up model to prevent first-request timeout...")
         dummy_input = np.zeros((1, 224, 224, 3), dtype=np.float32)
         _model.predict(dummy_input, verbose=0)
-        print("  [OK]  Disease model loaded and warmed up successfully!")
+        print("  [OK]  Disease model loaded and warmed up successfully using PyTorch!")
     return _model
 
-
 def predict(image_array: np.ndarray) -> dict:
-    """
-    Run inference on a preprocessed image array.
-
-    Parameters
-    ----------
-    image_array : np.ndarray
-        Shape (1, 224, 224, 3), values in [0, 1].
-
-    Returns
-    -------
-    dict with keys: class_name, disease, cause, confidence, solution, is_healthy
-    """
     model = load_model()
 
     predictions = model.predict(image_array, verbose=0)

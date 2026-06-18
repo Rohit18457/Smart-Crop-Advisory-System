@@ -44,7 +44,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <div className={`
         fixed inset-y-0 left-0 z-50 w-[272px]
-        bg-gradient-to-b from-surface-900 via-surface-900 to-surface-950
+        bg-surface-900/80 backdrop-blur-2xl border-r border-white/10
         shadow-2xl transform transition-transform duration-300 ease-out
         lg:translate-x-0 lg:static lg:inset-0
         flex flex-col

@@ -12,6 +12,9 @@ Uses in-memory caching with a 5-minute TTL to avoid hammering the API.
 import time
 import logging
 
+import os
+import json
+import redis
 import requests
 from flask import Blueprint, request, jsonify
 from config import CROP_PRICE_API_KEY, MOCK_MARKET_PRICES
@@ -23,11 +26,13 @@ market_bp = Blueprint("market", __name__)
 # ── data.gov.in API config ─────────────────────────────────────────────────────
 _DATA_GOV_URL = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
 _CACHE_TTL_SECONDS = 300  # 5 minutes
-_CACHE_MAX_ENTRIES = 128
 
-# In-memory TTL cache — keyed by (commodity, state, limit)
-_cache = {}
-
+redis_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+try:
+    redis_client = redis.from_url(redis_url)
+except Exception as e:
+    logger.warning(f"Could not connect to Redis for market cache: {e}")
+    redis_client = None
 
 def _fetch_live_prices(commodity_filter="", state_filter="", limit=100):
     """
@@ -37,12 +42,15 @@ def _fetch_live_prices(commodity_filter="", state_filter="", limit=100):
     If the API fails, returns (mock_data, False).
     """
     # Check cache first
-    now = time.time()
-    cache_key = f"{commodity_filter}|{state_filter}|{limit}"
+    cache_key = f"market|{commodity_filter}|{state_filter}|{limit}"
 
-    entry = _cache.get(cache_key)
-    if entry is not None and (now - entry["timestamp"]) < _CACHE_TTL_SECONDS:
-        return entry["data"], True
+    if redis_client:
+        try:
+            cached_data = redis_client.get(cache_key)
+            if cached_data:
+                return json.loads(cached_data), True
+        except Exception as e:
+            logger.warning(f"Redis get error: {e}")
 
     # If no API key, use mock data
     if not CROP_PRICE_API_KEY:
@@ -98,11 +106,12 @@ def _fetch_live_prices(commodity_filter="", state_filter="", limit=100):
             except (ValueError, TypeError):
                 continue
 
-        # Update cache (evict oldest entries if cache is full)
-        if len(_cache) >= _CACHE_MAX_ENTRIES:
-            oldest_key = min(_cache, key=lambda k: _cache[k]["timestamp"])
-            del _cache[oldest_key]
-        _cache[cache_key] = {"data": parsed, "timestamp": now}
+        # Update cache
+        if redis_client:
+            try:
+                redis_client.setex(cache_key, _CACHE_TTL_SECONDS, json.dumps(parsed))
+            except Exception as e:
+                logger.warning(f"Redis set error: {e}")
 
         return parsed, True
 

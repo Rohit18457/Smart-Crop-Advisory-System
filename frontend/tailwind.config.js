@@ -7,7 +7,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        heading: ['Outfit', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
         primary: {
@@ -79,6 +80,8 @@ module.exports = {
         'spin-slow': 'spin 3s linear infinite',
         'wave': 'wave 2.5s ease-in-out infinite',
         'counter-up': 'counterUp 1s ease-out forwards',
+        'blob': 'blob 7s infinite',
+        'glass-shine': 'glass-shine 2s infinite linear',
       },
       keyframes: {
         fadeIn: {
@@ -121,11 +124,23 @@ module.exports = {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        blob: {
+          '0%': { transform: 'translate(0px, 0px) scale(1)' },
+          '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+          '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+          '100%': { transform: 'translate(0px, 0px) scale(1)' },
+        },
+        'glass-shine': {
+          '0%': { backgroundPosition: '200% center' },
+          '100%': { backgroundPosition: '-200% center' },
+        },
       },
       transitionTimingFunction: {
         'bounce-in': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 }

@@ -8,7 +8,7 @@
 import axios from 'axios';
 import { supabase } from './supabase';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -71,6 +71,11 @@ export const predictDisease = async (imageFile) => {
   const response = await api.post('/predict-disease', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+  return response.data;
+};
+
+export const checkDiseaseStatus = async (taskId) => {
+  const response = await api.get(`/predict-disease/status/${taskId}`);
   return response.data;
 };
 

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { 
   TrendingUp, 
@@ -30,60 +31,49 @@ const CROP_EMOJIS = {
 
 const MarketPrices = () => {
   const { t } = useTranslation();
-  const [marketData, setMarketData] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [error, setError] = useState(null);
-  const [dataSource, setDataSource] = useState('');
   const [stateFilter, setStateFilter] = useState('');
 
-  useEffect(() => {
-    fetchMarketData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchMarketData = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
+  const { data: rawData, isLoading: loading, isError, error: queryError, refetch: fetchMarketData } = useQuery({
+    queryKey: ['marketPrices', stateFilter],
+    queryFn: async () => {
       const params = {};
       if (stateFilter) params.state = stateFilter;
-
       const data = await getMarketPrices(params);
-      if (data.success) {
-        const items = data.market_data.map((item, index) => {
-          const commodityLower = (item.commodity || '').toLowerCase();
-          return {
-            id: index + 1,
-            name: item.commodity || 'Unknown',
-            cropKey: commodityLower,
-            emoji: CROP_EMOJIS[commodityLower] || '🌱',
-            minPrice: item.min_price || 0,
-            maxPrice: item.max_price || 0,
-            modalPrice: item.modal_price || 0,
-            unit: item.unit || 'per quintal',
-            state: item.state || '',
-            district: item.district || '',
-            market: item.market || '',
-            variety: item.variety || '',
-            arrivalDate: item.arrival_date || '',
-            // Legacy mock fields (if present)
-            trend: item.trend || null,
-            change: item.change ? parseFloat(item.change) : null,
-          };
-        });
-        setMarketData(items);
-        setDataSource(data.source || 'unknown');
-      } else {
-        setError(data.error || 'Failed to fetch prices');
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch prices');
       }
-    } catch (err) {
-      setError(err.message || 'Failed to connect to server');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+  });
+
+  const error = isError ? queryError.message : null;
+  const dataSource = rawData?.source || 'unknown';
+
+  const marketData = useMemo(() => {
+    if (!rawData || !rawData.market_data) return [];
+    return rawData.market_data.map((item, index) => {
+      const commodityLower = (item.commodity || '').toLowerCase();
+      return {
+        id: index + 1,
+        name: item.commodity || 'Unknown',
+        cropKey: commodityLower,
+        emoji: CROP_EMOJIS[commodityLower] || '🌱',
+        minPrice: item.min_price || 0,
+        maxPrice: item.max_price || 0,
+        modalPrice: item.modal_price || 0,
+        unit: item.unit || 'per quintal',
+        state: item.state || '',
+        district: item.district || '',
+        market: item.market || '',
+        variety: item.variety || '',
+        arrivalDate: item.arrival_date || '',
+        trend: item.trend || null,
+        change: item.change ? parseFloat(item.change) : null,
+      };
+    });
+  }, [rawData]);
 
   const filteredData = marketData.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

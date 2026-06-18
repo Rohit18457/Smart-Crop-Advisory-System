@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Camera, Loader, AlertTriangle, CheckCircle, X, Shield, BookOpen, LogIn, MessageSquare, Star } from 'lucide-react';
 import Card from '../components/Common/Card';
-import { predictDisease } from '../api';
+import { predictDisease, checkDiseaseStatus } from '../api';
 import { saveHistory } from '../services/historyService';
 import { savePrediction } from '../services/adminService';
 import { useAuth } from '../context/AuthContext';
@@ -62,7 +62,24 @@ const DiseaseDetection = () => {
     try {
       const data = await predictDisease(selectedImage.file);
       if (data.success) {
-        const pred = data.prediction;
+        let pred;
+        if (data.task_id) {
+          let isDone = false;
+          while (!isDone) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            const statusData = await checkDiseaseStatus(data.task_id);
+            if (statusData.state === 'SUCCESS') {
+              isDone = true;
+              pred = statusData.prediction;
+            } else if (statusData.state === 'FAILURE') {
+              isDone = true;
+              throw new Error(statusData.error || 'Background prediction failed');
+            }
+          }
+        } else {
+          pred = data.prediction;
+        }
+
         setResult({
           disease: pred.disease,
           confidence: pred.confidence,

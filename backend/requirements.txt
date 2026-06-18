@@ -28,3 +28,7 @@ pytest>=8.0.0
 
 # Production server (optional)
 gunicorn==23.0.0
+
+# Async Tasks & Caching
+celery==5.4.0
+redis==5.0.4

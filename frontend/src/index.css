@@ -11,6 +11,10 @@
   body {
     @apply bg-surface-50 font-sans text-surface-900;
   }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
 
   ::-webkit-scrollbar {
     width: 6px;
@@ -37,11 +41,21 @@
 @layer components {
   /* Glass Card */
   .card {
-    @apply bg-white/80 backdrop-blur-sm rounded-2xl shadow-card border border-white/60 p-6 transition-all duration-300;
+    @apply relative overflow-hidden bg-white/70 backdrop-blur-lg rounded-2xl shadow-card border border-white/80 p-6 transition-all duration-300;
+  }
+
+  .card::after {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-tr from-white/0 via-white/50 to-white/0 opacity-0 transition-opacity duration-500 pointer-events-none;
+    background-size: 200% auto;
+  }
+
+  .card:hover::after {
+    @apply opacity-100 animate-glass-shine;
   }
 
   .card:hover {
-    @apply shadow-card-hover;
+    @apply shadow-premium -translate-y-1;
   }
 
   .card-solid {
@@ -50,10 +64,10 @@
 
   /* Buttons */
   .btn-primary {
-    @apply bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600
+    @apply relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400
     text-white font-semibold py-2.5 px-5 rounded-xl
     transition-all duration-300 ease-out
-    shadow-sm hover:shadow-glow
+    shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 hover:shadow-glow
     active:scale-[0.98]
     focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:ring-offset-2;
   }

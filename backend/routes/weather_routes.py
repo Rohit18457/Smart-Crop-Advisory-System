@@ -10,6 +10,9 @@ GET  /weather?city=<city_name>
 import time
 import logging
 
+import os
+import json
+import redis
 import requests
 from flask import Blueprint, request, jsonify
 from config import OPENWEATHER_API_KEY
@@ -21,26 +24,34 @@ weather_bp = Blueprint("weather", __name__)
 CURRENT_URL = "https://api.openweathermap.org/data/2.5/weather"
 FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
 
-# ── Weather Cache (#14) ───────────────────────────────────────────────────────
+# ── Weather Cache (Redis) ─────────────────────────────────────────────────────
 _WEATHER_CACHE_TTL = 180  # 3 minutes
-_WEATHER_CACHE_MAX = 64
-_weather_cache = {}
 
+redis_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+try:
+    redis_client = redis.from_url(redis_url)
+except Exception as e:
+    logger.warning(f"Could not connect to Redis for weather cache: {e}")
+    redis_client = None
 
 def _get_cached(cache_key):
     """Return cached data if still valid, else None."""
-    entry = _weather_cache.get(cache_key)
-    if entry and (time.time() - entry["ts"]) < _WEATHER_CACHE_TTL:
-        return entry["data"]
+    if redis_client:
+        try:
+            data = redis_client.get(cache_key)
+            if data:
+                return json.loads(data)
+        except Exception as e:
+            logger.warning(f"Redis get error: {e}")
     return None
 
-
 def _set_cached(cache_key, data):
-    """Store data in cache, evicting oldest if full."""
-    if len(_weather_cache) >= _WEATHER_CACHE_MAX:
-        oldest = min(_weather_cache, key=lambda k: _weather_cache[k]["ts"])
-        del _weather_cache[oldest]
-    _weather_cache[cache_key] = {"data": data, "ts": time.time()}
+    """Store data in cache with TTL."""
+    if redis_client:
+        try:
+            redis_client.setex(cache_key, _WEATHER_CACHE_TTL, json.dumps(data))
+        except Exception as e:
+            logger.warning(f"Redis set error: {e}")
 
 
 @weather_bp.route("/weather", methods=["GET"])

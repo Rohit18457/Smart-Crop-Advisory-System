@@ -39,8 +39,8 @@ backend/uploads/
 # ── Build outputs ────────────────────────────────
 frontend/build/
 
-# ── SQL migration/seed scripts (not needed in repo)
-*.sql
+# ── SQL migration/seed scripts ───────────────────
+# We want these tracked in the database/ folder now
 
 # ── Root-level example/integration files ─────────
 backend_integration_examples.py

@@ -13,9 +13,9 @@ import '@testing-library/jest-dom';
 describe('App', () => {
   test('renders without crashing', () => {
     // Mock Supabase env vars
-    process.env.REACT_APP_SUPABASE_URL = 'https://test.supabase.co';
-    process.env.REACT_APP_SUPABASE_ANON_KEY = 'test-key';
-    process.env.REACT_APP_API_URL = 'http://localhost:5000';
+    import.meta.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+    import.meta.env.VITE_SUPABASE_ANON_KEY = 'test-key';
+    import.meta.env.VITE_API_URL = 'http://localhost:5000';
 
     // Don't render full App as it needs Supabase; test individual pieces
     const { container } = render(<div data-testid="app-wrapper">App loads</div>);
