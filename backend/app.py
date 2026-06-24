@@ -39,6 +39,7 @@ from routes.weather_routes import weather_bp
 from routes.market_routes import market_bp
 from routes.user_routes import user_bp
 from routes.chat_routes import chat_bp
+from routes.whatsapp_routes import whatsapp_bp
 
 # ── Rate limiter (configurable storage — defaults to in-memory) ───────────────
 _ratelimit_storage = os.environ.get("RATELIMIT_STORAGE_URL", "memory://")
@@ -76,6 +77,7 @@ def create_app() -> Flask:
     app.register_blueprint(market_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(chat_bp)
+    app.register_blueprint(whatsapp_bp)
 
     # ── Security Headers (#17) ─────────────────────────────────────────────
     @app.after_request

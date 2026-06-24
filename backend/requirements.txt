@@ -32,3 +32,6 @@ gunicorn==23.0.0
 # Async Tasks & Caching
 celery==5.4.0
 redis==5.0.4
+
+# WhatsApp Bot
+twilio==9.0.0

@@ -4,6 +4,7 @@ import { Sprout, Loader, CheckCircle, Lightbulb, BarChart3, Calendar, Droplets }
 import Card from '../components/Common/Card';
 import { getCropRecommendation } from '../api';
 import { saveHistory } from '../services/historyService';
+import TextToSpeech from '../components/Common/TextToSpeech';
 
 const CropRecommendation = () => {
   const { t } = useTranslation();
@@ -258,7 +259,10 @@ const CropRecommendation = () => {
           {recommendation && (
             <div className="space-y-6 animate-fade-in">
               {/* Recommended Crop */}
-              <div className="text-center bg-gradient-to-br from-primary-50 to-emerald-50 rounded-2xl p-6 border border-primary-100">
+              <div className="text-center bg-gradient-to-br from-primary-50 to-emerald-50 rounded-2xl p-6 border border-primary-100 relative">
+                <div className="absolute top-4 right-4">
+                  <TextToSpeech text={`The recommended crop is ${recommendation.crop}. The AI confidence is ${recommendation.confidence}%. ${recommendation.topRecommendations && recommendation.topRecommendations.length > 1 ? `Alternative crops are ${recommendation.topRecommendations.slice(1).map(r => r.crop).join(', ')}.` : ''}`} />
+                </div>
                 <div className="text-4xl mb-2">🌾</div>
                 <h3 className="text-3xl font-extrabold text-primary-700 mb-1">{recommendation.crop}</h3>
 

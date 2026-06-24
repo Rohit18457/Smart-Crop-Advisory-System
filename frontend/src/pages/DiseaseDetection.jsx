@@ -9,6 +9,7 @@ import { savePrediction } from '../services/adminService';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabase';
+import TextToSpeech from '../components/Common/TextToSpeech';
 
 const DiseaseDetection = () => {
   const { t } = useTranslation();
@@ -310,9 +311,12 @@ const DiseaseDetection = () => {
                     <span className="text-2xl">🦠</span>
                     <h3 className="text-xl font-extrabold text-red-800">{result.disease}</h3>
                   </div>
-                  <span className={`px-3 py-1.5 rounded-xl text-xs font-bold ${getSeverityConfig(result.severity).bg} ${getSeverityConfig(result.severity).color}`}>
-                    {result.severity}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <TextToSpeech text={`Disease detected: ${result.disease}. Severity is ${result.severity}. ${result.description}. Recommended treatments include: ${result.treatment.join('. ')}. Prevention measures include: ${result.prevention.join('. ')}`} />
+                    <span className={`px-3 py-1.5 rounded-xl text-xs font-bold ${getSeverityConfig(result.severity).bg} ${getSeverityConfig(result.severity).color}`}>
+                      {result.severity}
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="mb-4">
