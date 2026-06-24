@@ -17,7 +17,7 @@ from groq import Groq
 
 from config import GROQ_API_KEY
 from routes.chat_routes import SYSTEM_PROMPT
-from models.disease_model import predict, _keras_available
+from models.disease_model import predict
 
 logger = logging.getLogger(__name__)
 
@@ -60,10 +60,7 @@ def whatsapp_webhook():
     
     # Check if an image was sent for disease detection
     if media_url and media_content_type.startswith("image/"):
-        if not _keras_available:
-            msg.body("Disease detection model is currently unavailable on the server.")
-            return str(resp)
-            
+        # Model is loaded via tflite
         prediction = process_image_url(media_url)
         if prediction:
             if prediction["is_healthy"]:
