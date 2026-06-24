@@ -1,7 +1,7 @@
 """
 Disease Prediction Model Loader
 ================================
-Loads the trained MobileNetV2 .keras model and exposes a predict() function
+Loads the trained MobileNetV2 .tflite model and exposes a predict() function
 that accepts a preprocessed numpy array and returns class name + confidence.
 """
 
@@ -12,34 +12,48 @@ from config import DISEASE_MODEL_PATH, DISEASE_CLASS_NAMES, DISEASE_SOLUTIONS
 
 logger = logging.getLogger(__name__)
 
-# Force Keras 3 to use the PyTorch backend instead of TensorFlow (avoids Windows DLL crashes)
-os.environ["KERAS_BACKEND"] = "torch"
-# Disable PyTorch's dynamo compiler to prevent cl.exe missing compiler errors on Windows
-os.environ["TORCH_COMPILE_DISABLE"] = "1"
-
-import keras
+# Try to use lightweight tflite_runtime, fallback to full tensorflow if not available
+try:
+    import tflite_runtime.interpreter as tflite
+    logger.info("Using tflite_runtime for model inference.")
+except ImportError:
+    try:
+        from tensorflow import lite as tflite
+        logger.info("Using tensorflow.lite for model inference (fallback).")
+    except ImportError:
+        logger.error("Neither tflite_runtime nor tensorflow is installed!")
+        tflite = None
 
 # ── Global handle ──────────────────────────────────────────────────────────────
-_model = None
-_keras_available = True
+_interpreter = None
+_input_details = None
+_output_details = None
 
 def load_model():
-    """Load the .keras model into memory (called once at app startup)."""
-    global _model
+    """Load the .tflite model into memory (called once at app startup)."""
+    global _interpreter, _input_details, _output_details
         
-    if _model is None:
-        print(f"  [..]  Loading disease model from {DISEASE_MODEL_PATH} via PyTorch backend...")
-        _model = keras.saving.load_model(DISEASE_MODEL_PATH)
+    if _interpreter is None:
+        print(f"  [..]  Loading disease model from {DISEASE_MODEL_PATH} via TFLite...")
+        _interpreter = tflite.Interpreter(model_path=DISEASE_MODEL_PATH)
+        _interpreter.allocate_tensors()
+        
+        _input_details = _interpreter.get_input_details()
+        _output_details = _interpreter.get_output_details()
+        
         print("  [..]  Warming up model to prevent first-request timeout...")
         dummy_input = np.zeros((1, 224, 224, 3), dtype=np.float32)
-        _model.predict(dummy_input, verbose=0)
-        print("  [OK]  Disease model loaded and warmed up successfully using PyTorch!")
-    return _model
+        _interpreter.set_tensor(_input_details[0]['index'], dummy_input)
+        _interpreter.invoke()
+        print("  [OK]  Disease model loaded and warmed up successfully using TFLite!")
+    return _interpreter
 
 def predict(image_array: np.ndarray) -> dict:
-    model = load_model()
+    load_model()
 
-    predictions = model.predict(image_array, verbose=0)
+    _interpreter.set_tensor(_input_details[0]['index'], image_array)
+    _interpreter.invoke()
+    predictions = _interpreter.get_tensor(_output_details[0]['index'])
     
     predicted_idx = int(np.argmax(predictions[0]))
     confidence = float(np.max(predictions[0])) * 100

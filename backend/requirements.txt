@@ -8,7 +8,7 @@ requests==2.32.3
 python-dotenv==1.1.0
 
 # ML / Image processing
-tensorflow==2.16.2
+tflite-runtime>=2.14.0
 numpy==1.26.4
 Pillow==11.1.0
 scikit-learn==1.6.1

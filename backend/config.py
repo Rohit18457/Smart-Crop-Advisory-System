@@ -15,8 +15,8 @@ load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 
-# Plant disease CNN model (MobileNetV2, .keras format)
-DISEASE_MODEL_PATH = os.path.join(MODELS_DIR, "best_model_20260407_183243.keras")
+# Plant disease CNN model (MobileNetV2, .tflite format)
+DISEASE_MODEL_PATH = os.path.join(MODELS_DIR, "best_model_20260407_183243.tflite")
 
 # Crop recommendation model artefacts
 CROP_MODEL_DIR = os.path.join(MODELS_DIR, "CropRecommendation")

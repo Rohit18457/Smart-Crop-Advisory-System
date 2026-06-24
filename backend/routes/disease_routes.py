@@ -9,7 +9,7 @@ POST  /predict-disease
 import logging
 
 from flask import Blueprint, request, jsonify
-from models.disease_model import predict, _keras_available
+from models.disease_model import predict
 from utils.image_processing import preprocess_image, allowed_file
 from utils.auth import supabase_auth_required
 
@@ -71,7 +71,7 @@ def predict_disease():
         import os
         
         use_celery = False
-        if _keras_available:
+        if True:
             try:
                 import redis
                 redis_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
